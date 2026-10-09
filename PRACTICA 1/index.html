@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+    <h1 id="mensaje">Cargando...</h1>
+    <input type="text" id="nuevoMensaje" placeholder="Escribe un mensaje nuevo">
+    <button id="guardar">Guardar Mensaje</button>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuc8xIhIeFAcF0FNTgGTMRNLQB_Art9xQ",
+            authDomain: "helloworldfirebase-73e88.firebaseapp.com",
+            databaseURL: "https://helloworldfirebase-73e88-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "helloworldfirebase-73e88",
+            storageBucket: "helloworldfirebase-73e88.firebasestorage.app",
+            messagingSenderId: "892225489476",
+            appId: "1:892225489476:web:489bc3db7281e05eec4a11"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const mensajeRef = ref(db, "mensaje");
+
+        // Escuchar cambios para mostrar el mensaje en el H1
+        onValue(mensajeRef, (snapshot) => {
+            const valor = snapshot.val();
+            document.getElementById("mensaje").textContent = valor || "Sin mensaje aún";
+        });
+
+        // Guardar un nuevo mensaje en Firebase al hacer clic
+        document.getElementById("guardar").addEventListener("click", () => {
+            const nuevoMensaje = document.getElementById("nuevoMensaje").value.trim();
+            if (nuevoMensaje) {
+                set(mensajeRef, nuevoMensaje)
+                    .then(() => {
+                        document.getElementById("nuevoMensaje").value = "";
+                    })
+                    .catch((error) => {
+                        console.error("Error al guardar:", error);
+                    });
+            }
+        });
+    </script>
+</body>
+
+</html>
