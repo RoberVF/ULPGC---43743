@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cobertura WiFi</title>
+  <style>
+    body { font-family: system-ui, sans-serif; text-align: center; margin-top: 2rem; }
+    #valor { font-size: 6rem; font-weight: bold; }
+    #estado { color: #888; }
+    #contenedor { max-width: 800px; margin: 2rem auto; position: relative; }
+  </style>
+</head>
+<body>
+  <h1>Cobertura WiFi</h1>
+  <div id="valor">--</div>
+  <div>dBm</div>
+  <p id="estado">Conectando...</p>
+
+  <div id="contenedor">
+    <canvas id="grafica"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+  <script>
+    const valor = document.getElementById('valor');
+    const estado = document.getElementById('estado');
+
+    const MAX_PUNTOS = 200; // 200 muestras x 100 ms = ventana de 20 s
+    const datos = [];
+    const grafica = new Chart(document.getElementById('grafica'), {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{ data: datos, borderWidth: 2, pointRadius: 0, tension: 0.2 }]
+      },
+      options: {
+        animation: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { display: false },
+          y: { min: -100, max: -20, title: { display: true, text: 'dBm' } }
+        }
+      }
+    });
+
+    function agregar(v) {
+      datos.push(v);
+      grafica.data.labels.push('');
+      if (datos.length > MAX_PUNTOS) {
+        datos.shift();
+        grafica.data.labels.shift();
+      }
+      grafica.update('none');
+    }
+
+    function conectar() {
+      const ws = new WebSocket(`ws://${location.host}/ws/web`);
+      ws.onopen = () => { estado.textContent = 'Conectado'; };
+      ws.onmessage = (e) => {
+        const v = Number(e.data);
+        if (Number.isNaN(v)) return;
+        valor.textContent = v;
+        agregar(v);
+      };
+      ws.onclose = () => {
+        estado.textContent = 'Desconectado, reintentando...';
+        setTimeout(conectar, 1000);
+      };
+    }
+
+    conectar();
+  </script>
+</body>
+</html>
